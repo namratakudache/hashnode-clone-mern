@@ -2,6 +2,7 @@ const User = require("../models/User");
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 router.post("/register", async (req, res) => {
   try {
@@ -45,6 +46,45 @@ router.post("/register", async (req, res) => {
     console.error("Error during registration:", error);
     res.status(500).json({
       message: "Internal server error",
+    });
+  }
+});
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Please provide email and password",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid email or password",
+      });
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        message: "Invalid email or password",
+      });
+    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+
+    res.status(500).json({
+      message: "Server error",
     });
   }
 });
