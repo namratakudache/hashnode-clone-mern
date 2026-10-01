@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/register", async (req, res) => {
   try {
@@ -87,6 +88,12 @@ router.post("/login", async (req, res) => {
       message: "Server error",
     });
   }
+});
+router.get("/profile", authMiddleware, async (req, res) => {
+  res.status(200).json({
+    message: "You are authenticated",
+    userId: req.user.id,
+  });
 });
 
 module.exports = router;
