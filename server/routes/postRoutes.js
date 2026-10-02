@@ -39,8 +39,33 @@ router.post("/", authMiddleware, async (req, res) => {
 //get all data
 router.get("/", async (req, res) => {
   try {
-    const posts = await Post.find();
+    const { search, tag } = req.query;
 
+    let posts;
+    if (search) {
+      posts = await Post.find({
+        $or: [
+          {
+            title: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+          {
+            tags: {
+              $regex: search,
+              $options: "i",
+            },
+          },
+        ],
+      }).populate("author", "name email");
+    } else if (tag) {
+      posts = await Post.find({
+        tags: tag,
+      }).populate("author", "name email");
+    } else {
+      posts = await Post.find().populate("author", "name email");
+    }
     return res.status(200).json({
       posts,
     });
